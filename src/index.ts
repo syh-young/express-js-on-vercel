@@ -7,46 +7,30 @@ const __dirname = path.dirname(__filename)
 
 const app = express()
 
-// Home route - HTML
-app.get('/', (req, res) => {
-  res.type('html').send(`
-    <!doctype html>
-    <html>
-      <head>
-        <meta charset="utf-8"/>
-        <title>Express on Vercel</title>
-        <link rel="stylesheet" href="/style.css" />
-      </head>
-      <body>
-        <nav>
-          <a href="/">Home</a>
-          <a href="/about">About</a>
-          <a href="/api-data">API Data</a>
-          <a href="/healthz">Health</a>
-        </nav>
-        <h1>Welcome to Express on Vercel 🚀</h1>
-        <p>This is a minimal example without a database or forms.</p>
-        <img src="/logo.png" alt="Logo" width="120" />
-      </body>
-    </html>
-  `)
-})
+// ✅ 반드시 필요
+app.use(express.json())
 
-app.get('/about', function (req, res) {
-  res.sendFile(path.join(__dirname, '..', 'components', 'about.htm'))
-})
+// Home
+app.get('/', (req, res) => { ... })
 
-// Example API endpoint - JSON
-app.get('/api-data', (req, res) => {
-  res.json({
-    message: 'Here is some sample API data',
-    items: ['apple', 'banana', 'cherry'],
-  })
-})
+app.get('/about', (req, res) => { ... })
 
-// Health check
+app.get('/api-data', (req, res) => { ... })
+
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
+// 🔑 OAuth callback
+app.get('/api/oauth/callback', (req, res) => {
+  console.log('OAuth callback received:', req.query)
+  res.status(200).send('oauth ok')
+})
+
+// 🔔 Webhook
+app.post('/api/webhook/cafe24', (req, res) => {
+  console.log('Cafe24 webhook received:', req.body)
+  res.status(200).send('webhook ok')
 })
 
 export default app
