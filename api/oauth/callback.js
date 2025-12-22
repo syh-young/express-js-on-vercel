@@ -1,49 +1,55 @@
+import fetch from "node-fetch";
+
 export default async function handler(req, res) {
-  try {
-    // 1️⃣ authorization code
-    const { code } = req.query;
+  // 1️⃣ 인가 코드 받기
+  const { code, error, error_description } = req.query;
 
-    if (!code) {
-      return res.status(400).json({
-        error: "missing_code",
-        message: "No authorization code provided",
-      });
-    }
-
-    // 2️⃣ 환경변수 로드
-    const {
-      CAFE24_CLIENT_ID,
-      CAFE24_CLIENT_SECRET,
-      CAFE24_REDIRECT_URI,
-      CAFE24_MALL_ID,
-    } = process.env;
-
-    // 3️⃣ 환경변수 검증
-    if (
-      !CAFE24_CLIENT_ID ||
-      !CAFE24_CLIENT_SECRET ||
-      !CAFE24_REDIRECT_URI ||
-      !CAFE24_MALL_ID
-    ) {
-      return res.status(500).json({
-        error: "env_missing",
-        message: "One or more CAFE24 env variables are missing",
-      });
-    }
-
-    // 4️⃣ Cafe24 토큰 발급 URL
-    const tokenUrl = `https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/token`;
-
-    // 5️⃣ 요청 바디
-    const body = new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: CAFE24_CLIENT_ID,
-      client_secret: CAFE24_CLIENT_SECRET,
-      redirect_uri: CAFE24_REDIRECT_URI,
-      code,
+  // Cafe24에서 에러를 들고 돌아온 경우
+  if (error) {
+    return res.status(400).json({
+      message: "OAuth authorization failed",
+      error,
+      error_description,
     });
+  }
 
-    // 6️⃣ 토큰 요청
+  if (!code) {
+    return res.status(400).json({
+      message: "No authorization code received",
+    });
+  }
+
+  // 2️⃣ 환경변수 체크
+  const {
+    CAFE24_CLIENT_ID,
+    CAFE24_CLIENT_SECRET,
+    CAFE24_MALL_ID,
+    CAFE24_REDIRECT_URI,
+  } = process.env;
+
+  if (
+    !CAFE24_CLIENT_ID ||
+    !CAFE24_CLIENT_SECRET ||
+    !CAFE24_MALL_ID ||
+    !CAFE24_REDIRECT_URI
+  ) {
+    return res.status(500).json({
+      message: "Missing environment variables",
+    });
+  }
+
+  // 3️⃣ 토큰 요청
+  const tokenUrl = `https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/token`;
+
+  const body = new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: CAFE24_CLIENT_ID,
+    client_secret: CAFE24_CLIENT_SECRET,
+    redirect_uri: CAFE24_REDIRECT_URI,
+    code,
+  });
+
+  try {
     const response = await fetch(tokenUrl, {
       method: "POST",
       headers: {
@@ -54,7 +60,7 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    // 7️⃣ Cafe24 에러 그대로 반환
+    // 4️⃣ Cafe24에서 에러 내려준 경우
     if (!response.ok) {
       return res.status(400).json({
         message: "Failed to get access token",
@@ -62,15 +68,16 @@ export default async function handler(req, res) {
       });
     }
 
-    // ✅ 성공 (access_token 여기서 나옴)
+    // ✅ 성공 (access_token 나오는 지점)
     return res.status(200).json({
-      success: true,
+      message: "OAuth success",
       token: data,
     });
+
   } catch (err) {
     return res.status(500).json({
-      error: "server_error",
-      message: err.message,
+      message: "Server error",
+      error: err.message,
     });
   }
 }
