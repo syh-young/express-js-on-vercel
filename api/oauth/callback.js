@@ -1,9 +1,10 @@
 export default async function handler(req, res) {
   const { code, error, error_description } = req.query;
 
-  // 1️⃣ OAuth 에러로 돌아온 경우
+  // 1️⃣ Cafe24에서 에러로 돌아온 경우
   if (error) {
     return res.status(400).json({
+      ok: false,
       message: "OAuth authorization failed",
       error,
       error_description,
@@ -12,6 +13,7 @@ export default async function handler(req, res) {
 
   if (!code) {
     return res.status(400).json({
+      ok: false,
       message: "No authorization code received",
     });
   }
@@ -20,17 +22,24 @@ export default async function handler(req, res) {
   const {
     CAFE24_CLIENT_ID,
     CAFE24_CLIENT_SECRET,
+    CAFE24_MALL_ID,
     CAFE24_REDIRECT_URI,
   } = process.env;
 
-  if (!CAFE24_CLIENT_ID || !CAFE24_CLIENT_SECRET || !CAFE24_REDIRECT_URI) {
+  if (
+    !CAFE24_CLIENT_ID ||
+    !CAFE24_CLIENT_SECRET ||
+    !CAFE24_MALL_ID ||
+    !CAFE24_REDIRECT_URI
+  ) {
     return res.status(500).json({
+      ok: false,
       message: "Missing environment variables",
     });
   }
 
-  // ✅ 3️⃣ 토큰 URL (이게 핵심)
-  const tokenUrl = "https://api.cafe24.com/oauth/token";
+  // 3️⃣ 토큰 요청
+  const tokenUrl = `https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/token`;
 
   const body = new URLSearchParams({
     grant_type: "authorization_code",
@@ -49,23 +58,24 @@ export default async function handler(req, res) {
       body,
     });
 
-    const data = await response.json();
+    const text = await response.text();
 
     if (!response.ok) {
-      return res.status(400).json({
+      return res.status(response.status).json({
+        ok: false,
         message: "Failed to get access token",
-        cafe24_error: data,
+        raw: text,
       });
     }
 
-    // ✅ 성공
     return res.status(200).json({
-      message: "OAuth success",
-      token: data,
+      ok: true,
+      token: JSON.parse(text),
     });
 
   } catch (err) {
     return res.status(500).json({
+      ok: false,
       message: "Server crashed",
       error: err.message,
     });
