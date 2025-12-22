@@ -1,7 +1,9 @@
-import fetch from "node-fetch";
-
 export default async function handler(req, res) {
-  const { code } = req.query;
+  const { code, error, error_description } = req.query;
+
+  if (error) {
+    return res.status(400).json({ error, error_description });
+  }
 
   if (!code) {
     return res.status(400).send("No code");
@@ -25,8 +27,7 @@ export default async function handler(req, res) {
     body,
   });
 
-  const data = await response.json();
+  const text = await response.text(); // 🔥 중요
 
-  // 🔥 여기서 access_token 나옴
-  res.json(data);
+  return res.status(response.status).send(text);
 }
