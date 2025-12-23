@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const tokenUrl = `https://${CAFE24_MALL_ID}.cafe24api.com/api/v2/oauth/token`;
+  const tokenUrl = `https://${CAFE24_MALL_ID}.cafe24.com/api/v2/oauth/token`;
 
   // 공식 가이드: Authorization Basic base64(client_id:client_secret)
   const basic = Buffer.from(`${CAFE24_CLIENT_ID}:${CAFE24_CLIENT_SECRET}`).toString("base64");
