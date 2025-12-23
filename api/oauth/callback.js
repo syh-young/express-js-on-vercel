@@ -24,13 +24,16 @@ export default async function handler(req, res) {
       code,
     });
 
-    const response = await fetch("https://api.cafe24.com/oauth/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body,
-    });
+    const response = await fetch(
+  "https://top21young.cafe24api.com/api/v2/oauth/token",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body,
+  });
+
 
     const data = await response.json();
 
